@@ -3,5 +3,7 @@ export class ProductDTO {
   name: string;
   category: string;
   area: string;
-  createdAt: Date;
+  _count?: {
+    orders: number;
+  };
 }
