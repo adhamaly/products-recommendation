@@ -25,7 +25,7 @@ export class ProductRepository {
    */
   async findById(id: number): Promise<ProductDTO | null> {
     const product = await this.prisma.product.findUnique({
-      where: { id },
+      where: { id: Number(id) },
     });
 
     if (!product) {
@@ -41,5 +41,16 @@ export class ProductRepository {
     area: string;
   }): Promise<ProductDTO> {
     return this.prisma.product.create({ data });
+  }
+
+  /**
+   * Get the count of products based on the provided arguments.
+   * @param productCountArgs Prisma's count query arguments for flexibility (default is empty).
+   * @returns The total count of products matching the provided arguments.
+   */
+  async getCount(
+    productCountArgs: Prisma.ProductCountArgs = {},
+  ): Promise<number> {
+    return this.prisma.product.count(productCountArgs);
   }
 }

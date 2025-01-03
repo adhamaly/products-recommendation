@@ -1,34 +1,52 @@
 import { Injectable } from '@nestjs/common';
 import { ProductRepository } from './product.repository';
-import { PrismaService } from 'src/prisma/prisma.service';
 import { GetAllProductsDTO } from './dto/get-all-products.dto';
 import { ProductDTO } from './dto/product.dto';
 import { Prisma } from '@prisma/client';
 import { GetTopProductsDTO } from './dto/get-top-products';
+import { ResponsePayload } from 'src/common/interfaces/custom-response.class';
+import { ProductParamDto } from './dto/product-id-param.dto';
 
 @Injectable()
 export class ProductService {
-  constructor(
-    private readonly productsRepository: ProductRepository,
-    private prismaService: PrismaService,
-  ) {}
+  constructor(private readonly productsRepository: ProductRepository) {}
 
-  async getAllProducts(filters: GetAllProductsDTO): Promise<ProductDTO[]> {
-    if (filters.categories && filters.categories.length) {
-      const products = [];
-      for (let i = 0; i < filters.categories.length; i++) {
-        products.push(
-          await this.prismaService.product.findFirst({
-            where: { category: filters.categories[i] },
-          }),
-        );
-      }
-    }
-    return this.prismaService.product.findMany();
+  async getAllProducts(
+    getAllProductsDTO: GetAllProductsDTO,
+  ): Promise<ResponsePayload<ProductDTO>> {
+    const { page = 1, limit = 20, categories } = getAllProductsDTO;
+    const skip = (page - 1) * limit;
+
+    const filter = categories?.length > 0 && {
+      where: {
+        category: { in: categories },
+      },
+    };
+
+    const products = await this.productsRepository.findAll({
+      ...filter,
+      select: {
+        id: true,
+        name: true,
+        category: true,
+        area: true,
+      },
+      skip: skip,
+      take: Number(limit),
+    });
+    const productsCount = await this.productsRepository.getCount(filter);
+
+    return {
+      data: products,
+      pages: Math.ceil(productsCount / limit) || 0,
+      total: productsCount,
+      page: Number(page),
+      limit: Number(limit),
+    };
   }
 
-  async getProductById(id: number): Promise<ProductDTO> {
-    return this.productsRepository.findById(id);
+  async getProductById({ productId }: ProductParamDto): Promise<ProductDTO> {
+    return this.productsRepository.findById(productId);
   }
 
   async getTopOrderedProducts({ area }: GetTopProductsDTO) {
