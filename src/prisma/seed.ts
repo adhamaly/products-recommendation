@@ -52,7 +52,7 @@ async function main() {
 
     await prisma.orderItem.createMany({ data: orderItems });
   }
-  console.log("Seeding finished")
+  console.log('Seeding finished');
 }
 
 main()
