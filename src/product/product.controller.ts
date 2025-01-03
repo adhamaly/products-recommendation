@@ -3,6 +3,8 @@ import { ProductService } from './product.service';
 import { GetAllProductsDTO } from './dto/get-all-products.dto';
 import { ApiTags } from '@nestjs/swagger';
 import { GetTopProductsDTO } from './dto/get-top-products';
+import { CustomResponse } from 'src/common/interfaces/custom-response.class';
+import { ProductParamDto } from './dto/product-id-param.dto';
 
 @Controller('products')
 @ApiTags('Products')
@@ -11,7 +13,10 @@ export class ProductController {
 
   @Get()
   async getAllProducts(@Query() filters: GetAllProductsDTO) {
-    return this.productsService.getAllProducts(filters);
+    const result = await this.productsService.getAllProducts(filters);
+    return new CustomResponse().success({
+      payload: result,
+    });
   }
 
   @Get('top-ordered-products')
@@ -19,11 +24,16 @@ export class ProductController {
     const topOrderedProducts =
       await this.productsService.getTopOrderedProducts(getTopProductsDTO);
 
-    return topOrderedProducts;
+    return new CustomResponse().success({
+      payload: { data: topOrderedProducts },
+    });
   }
 
-  @Get(':id')
-  async getProductById(@Param('id') id: string) {
-    return this.productsService.getProductById(Number(id));
+  @Get(':productId')
+  async getProductById(@Param() productParamDto: ProductParamDto) {
+    const product = await this.productsService.getProductById(productParamDto);
+    return new CustomResponse().success({
+      payload: { data: product },
+    });
   }
 }

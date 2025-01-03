@@ -15,7 +15,7 @@ model Product {
   orders    OrderItem[]
   createdAt DateTime    @default(now())
 
-  @@index(fields: [area])
+  @@index(fields: [area, category])
 }
 
 model Order {
