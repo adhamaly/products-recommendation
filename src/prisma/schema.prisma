@@ -8,12 +8,13 @@ generator client {
 }
 
 model Product {
-  id        Int         @id @default(autoincrement())
-  name      String
-  category  String
-  area      String
-  orders    OrderItem[]
-  createdAt DateTime    @default(now())
+  id              Int         @id @default(autoincrement())
+  name            String
+  category        String
+  area            String
+  orders          OrderItem[]
+  createdAt       DateTime    @default(now())
+  quantityInStock Int?
 
   @@index(fields: [area, category])
 }

@@ -35,12 +35,29 @@ export class ProductRepository {
     return product;
   }
 
-  async create(data: {
-    name: string;
-    category: string;
-    area: string;
-  }): Promise<ProductDTO> {
+  /**
+   * Create a new product.
+   * @param data - Prisma's ProductCreateInput.
+   * @returns The created ProductDTO.
+   */
+  async create(data: Prisma.ProductCreateInput): Promise<ProductDTO> {
     return this.prisma.product.create({ data });
+  }
+
+  /**
+   * Update an existing product.
+   * @param productId - The ID of the product to update.
+   * @param data - Prisma's ProductUpdateInput.
+   * @returns The updated ProductDTO.
+   */
+  async update(
+    productId: number,
+    data: Prisma.ProductUpdateInput,
+  ): Promise<ProductDTO> {
+    return this.prisma.product.update({
+      where: { id: productId },
+      data,
+    });
   }
 
   /**

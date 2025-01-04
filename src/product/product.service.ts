@@ -6,6 +6,8 @@ import { Prisma } from '@prisma/client';
 import { GetTopProductsDTO } from './dto/get-top-products';
 import { ResponsePayload } from 'src/common/interfaces/custom-response.class';
 import { ProductParamDto } from './dto/product-id-param.dto';
+import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
+import { OrderDTO } from 'src/order/dto/order.dto';
 
 @Injectable()
 export class ProductService {
@@ -78,5 +80,28 @@ export class ProductService {
         return { ...product, ordersCount: _count.orders };
       },
     );
+  }
+
+  @RabbitSubscribe({
+    exchange: 'order_created',
+    routingKey: '',
+    queue: 'order_created-queue',
+    queueOptions: {
+      durable: true,
+    },
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    errorHandler: (channel, messages, error) => {
+      console.log(`: ${error}`);
+      channel.nack(messages, false, false);
+    },
+  })
+  async updateProductQuantityHandler(createdOrder: OrderDTO) {
+    return createdOrder.items.forEach(async (item) => {
+      await this.productsRepository.update(item.productId, {
+        quantityInStock: {
+          decrement: item.quantity,
+        },
+      });
+    });
   }
 }

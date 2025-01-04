@@ -8,7 +8,12 @@ async function main() {
   const maxOrderItems = 10;
 
   // Step 1: Seed Products
-  const products: { name: string; category: string; area: string }[] = [];
+  const products: {
+    name: string;
+    category: string;
+    area: string;
+    quantityInStock: number;
+  }[] = [];
 
   const areas = ['Maadi', 'Zayed', 'New Cairo', 'Giza'];
 
@@ -19,6 +24,7 @@ async function main() {
       name: `Product ${i + 1}`,
       category: `Product ${i + 1} Category`,
       area: randomArea,
+      quantityInStock: 200,
     });
   }
 
@@ -37,20 +43,31 @@ async function main() {
       },
     });
 
-    const orderItems = [];
     const itemsCount = Math.floor(Math.random() * maxOrderItems) + 1;
 
     for (let j = 0; j < itemsCount; j++) {
       const randomProductId =
         productIds[Math.floor(Math.random() * productIds.length)];
-      orderItems.push({
-        productId: randomProductId,
-        quantity: Math.floor(Math.random() * 5) + 1,
-        orderId: order.id,
+
+      const quantity = Math.floor(Math.random() * 5) + 1;
+
+      await prisma.orderItem.create({
+        data: {
+          productId: randomProductId,
+          quantity: quantity,
+          orderId: order.id,
+        },
+      });
+
+      await prisma.product.update({
+        where: {
+          id: randomProductId,
+        },
+        data: {
+          quantityInStock: { decrement: quantity },
+        },
       });
     }
-
-    await prisma.orderItem.createMany({ data: orderItems });
   }
   console.log('Seeding finished');
 }
