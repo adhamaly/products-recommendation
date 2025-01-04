@@ -7,7 +7,7 @@ import { GetTopProductsDTO } from './dto/get-top-products';
 import { ResponsePayload } from 'src/common/interfaces/custom-response.class';
 import { ProductParamDto } from './dto/product-id-param.dto';
 import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
-import { OrderDTO } from 'src/order/dto/order.dto';
+import { OrderDTO } from '../common/dtos/order.dto';
 
 @Injectable()
 export class ProductService {

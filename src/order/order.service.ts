@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CreateOrderDTO } from './dto/create-order-dto';
 import { OrderRepository } from './order.repository';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { OrderDTO } from './dto/order.dto';
+import { OrderDTO } from '../common/dtos/order.dto';
 
 @Injectable()
 export class OrderService {
