@@ -1,17 +1,20 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { GetAllProductsDTO } from './dto/get-all-products.dto';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { GetTopProductsDTO } from './dto/get-top-products';
 import { CustomResponse } from 'src/common/interfaces/custom-response.class';
 import { ProductParamDto } from './dto/product-id-param.dto';
+import { JwtVerifyGuard } from 'src/auth/gurads/jwt-verify.guard';
 
 @Controller('products')
 @ApiTags('Products')
+@ApiBearerAuth()
 export class ProductController {
   constructor(private readonly productsService: ProductService) {}
 
   @Get()
+  @UseGuards(JwtVerifyGuard)
   async getAllProducts(@Query() filters: GetAllProductsDTO) {
     const result = await this.productsService.getAllProducts(filters);
     return new CustomResponse().success({
@@ -20,6 +23,7 @@ export class ProductController {
   }
 
   @Get('top-ordered-products')
+  @UseGuards(JwtVerifyGuard)
   async getTopOrderProducts(@Query() getTopProductsDTO: GetTopProductsDTO) {
     const topOrderedProducts =
       await this.productsService.getTopOrderedProducts(getTopProductsDTO);
@@ -30,6 +34,7 @@ export class ProductController {
   }
 
   @Get(':productId')
+  @UseGuards(JwtVerifyGuard)
   async getProductById(@Param() productParamDto: ProductParamDto) {
     const product = await this.productsService.getProductById(productParamDto);
     return new CustomResponse().success({

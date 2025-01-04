@@ -33,3 +33,15 @@ model OrderItem {
   order     Order   @relation(fields: [orderId], references: [id])
   orderId   Int
 }
+
+model User {
+  id       Int      @id @default(autoincrement())
+  email    String   @unique
+  password String
+  role     UserRole
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
