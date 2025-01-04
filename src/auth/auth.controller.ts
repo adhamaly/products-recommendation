@@ -4,20 +4,23 @@ import { AuthService } from './auth.service';
 import { SignupUserDto } from './dtos/signup.dto';
 import { LoginEmailDto } from './dtos/login-email.dto';
 import { CustomResponse } from 'src/common/interfaces/custom-response.class';
+import { Public } from 'src/common/decorators/public.decorator';
 
 @Controller('auth')
 @ApiTags('Auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  @Post('signup')
+  @Public()
+  @Post('public/signup')
   async signup(@Body() signupUserDto: SignupUserDto) {
     return new CustomResponse().success({
       payload: { data: await this.authService.signup(signupUserDto) },
     });
   }
 
-  @Post('login')
+  @Public()
+  @Post('public/login')
   async login(@Body() loginEmailDto: LoginEmailDto) {
     return new CustomResponse().success({
       payload: { data: await this.authService.login(loginEmailDto) },

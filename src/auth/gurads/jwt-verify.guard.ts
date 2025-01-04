@@ -1,3 +1,4 @@
+import { isRabbitContext } from '@golevelup/nestjs-rabbitmq';
 import {
   Injectable,
   CanActivate,
@@ -5,8 +6,10 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { UserRole } from '@prisma/client';
+import { IS_PUBLIC_KEY } from 'src/common/decorators/public.decorator';
 import { UserJwtPersona } from 'src/common/interfaces/user-jwt-persona.interface';
 
 @Injectable()
@@ -14,9 +17,23 @@ export class JwtVerifyGuard implements CanActivate {
   constructor(
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private reflector: Reflector,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    // Do nothing if this is a RabbitMQ event
+    if (isRabbitContext(context)) {
+      return true;
+    }
+
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (isPublic) {
+      return true;
+    }
+
     const request = context.switchToHttp().getRequest();
     if (!request.headers.authorization) return false;
 
