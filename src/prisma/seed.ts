@@ -1,10 +1,34 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, UserRole } from '@prisma/client';
 
 const prisma = new PrismaClient();
+import * as bcrypt from 'bcrypt';
+
+async function seedAdminAccount() {
+  const adminExist = await prisma.user.findFirst({
+    where: { email: process.env.ADMIN_EMAIL },
+  });
+  if (adminExist) return;
+
+  const hashedPassword = await bcrypt.hash(
+    process.env.ADMIN_PASSWORD,
+    parseInt(process.env.SALT),
+  );
+
+  await prisma.user.create({
+    data: {
+      email: process.env.ADMIN_EMAIL,
+      password: hashedPassword,
+      role: UserRole.ADMIN,
+    },
+  });
+}
 
 async function main() {
-  const productsCount = 70000;
-  const ordersCount = 10000;
+  // Seed Admin Account
+  await seedAdminAccount();
+
+  const productsCount = 700;
+  const ordersCount = 1000;
   const maxOrderItems = 10;
 
   // Step 1: Seed Products

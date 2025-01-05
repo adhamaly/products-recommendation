@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  nest-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nest-api
+    restart: unless-stopped
+    ports:
+      - 3000:3000
+    env_file:
+      - .env
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: rabbitmart
+      MYSQL_USER: root
+    depends_on:
+      - mysql
+      - rabbitmq
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - 3306:3306
+    volumes:
+      - mysql:/var/lib/mysql
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
+      retries: 10
+      interval: 3s
+      timeout: 30s
+
+  rabbitmq:
+    image: rabbitmq:3.12
+    container_name: rabbitmq
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    healthcheck:
+      test: ['CMD', 'rabbitmqctl', 'status']
+      interval: 2s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mysql:
+    name: mysql-data
