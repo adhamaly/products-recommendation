@@ -1,8 +1,13 @@
+import { RabbitExchanges } from '../enums/rabbitmq-exchanges.enum';
+
 export const rabbitmqConfig = {
   exchanges: [
     {
-      name: 'order_created',
-      type: 'fanout', // Fanout exchange to broadcast the message
+      name: RabbitExchanges.MESSAGE_WORKER,
+      type: 'direct',
+      options: {
+        durable: true,
+      },
     },
   ],
   channels: {

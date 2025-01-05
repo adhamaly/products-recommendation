@@ -1,6 +1,7 @@
 import { Injectable, MethodNotAllowedException } from '@nestjs/common';
 import { UserRepository } from './user.repository';
 import { UserRole } from '@prisma/client';
+import { RegisterFcmToken } from './dto/register-fcm.dto';
 
 @Injectable()
 export class UserService {
@@ -25,5 +26,9 @@ export class UserService {
 
   async findUserByEmail(email: string) {
     return this.usersRepository.findOne({ where: { email } });
+  }
+
+  async registerFcmToken(userId: number, { fcmToken }: RegisterFcmToken) {
+    await this.usersRepository.update(userId, { fcmToken: fcmToken });
   }
 }

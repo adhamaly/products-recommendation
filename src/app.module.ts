@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtVerifyGuard } from './auth/gurads/jwt-verify.guard';
+import { NotificationModule } from './notifications/notification.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { JwtVerifyGuard } from './auth/gurads/jwt-verify.guard';
     OrderModule,
     AuthModule,
     UserModule,
+    NotificationModule,
   ],
   controllers: [],
   providers: [

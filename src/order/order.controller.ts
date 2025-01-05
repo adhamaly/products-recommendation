@@ -17,14 +17,9 @@ export class OrderController {
     @Persona() userPersona: UserJwtPersona,
     @Body() createOrderDTO: CreateOrderDTO,
   ) {
-    const createdOrder = await this.orderService.create(
-      userPersona.id,
-      createOrderDTO,
-    );
+    await this.orderService.create(userPersona.id, createOrderDTO);
     return new CustomResponse().success({
-      payload: {
-        data: createdOrder,
-      },
+      message: 'Order Initiated ...',
     });
   }
 }

@@ -3,6 +3,7 @@ export class ProductDTO {
   name: string;
   category: string;
   area: string;
+  quantityInStock: number;
   _count?: {
     orders: number;
   };

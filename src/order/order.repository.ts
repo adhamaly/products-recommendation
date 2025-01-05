@@ -31,4 +31,34 @@ export class OrderRepository {
       },
     });
   }
+
+  async delete(orderId: number) {
+    await this.prisma.order.delete({
+      where: {
+        id: orderId,
+      },
+    });
+
+    const orderedItems = await this.prisma.orderItem.findMany({
+      where: {
+        orderId: orderId,
+      },
+    });
+
+    for (const item of orderedItems) {
+      await this.prisma.orderItem.delete({
+        where: { id: item.id },
+      });
+      await this.prisma.product.update({
+        where: {
+          id: item.productId,
+        },
+        data: {
+          quantityInStock: {
+            increment: item.quantity,
+          },
+        },
+      });
+    }
+  }
 }

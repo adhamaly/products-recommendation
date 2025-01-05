@@ -6,12 +6,18 @@ import { Prisma } from '@prisma/client';
 import { GetTopProductsDTO } from './dto/get-top-products';
 import { ResponsePayload } from 'src/common/interfaces/custom-response.class';
 import { ProductParamDto } from './dto/product-id-param.dto';
-import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
+import { AmqpConnection, RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
 import { OrderDTO } from '../common/dtos/order.dto';
+import { RabbitExchanges } from 'src/common/enums/rabbitmq-exchanges.enum';
+import { RabbitRoutingKeys } from 'src/common/enums/rabbitmq-routing-keys.enum';
+import { RabbitQueues } from 'src/common/enums/rabbitmq-queues.enum';
 
 @Injectable()
 export class ProductService {
-  constructor(private readonly productsRepository: ProductRepository) {}
+  constructor(
+    private readonly productsRepository: ProductRepository,
+    private readonly amqpConnection: AmqpConnection,
+  ) {}
 
   async getAllProducts(
     getAllProductsDTO: GetAllProductsDTO,
@@ -83,25 +89,65 @@ export class ProductService {
   }
 
   @RabbitSubscribe({
-    exchange: 'order_created',
-    routingKey: '',
-    queue: 'order_created-queue',
+    exchange: RabbitExchanges.MESSAGE_WORKER,
+    routingKey: RabbitRoutingKeys.MESSAGE_WORKER_EVENTS_STOCK_AVAILABILITY,
+    queue: RabbitQueues.MESSAGE_WORKER_EVENTS_STOCK_AVAILABILITY,
     queueOptions: {
       durable: true,
     },
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     errorHandler: (channel, messages, error) => {
       console.log(`: ${error}`);
       channel.nack(messages, false, false);
     },
   })
   async updateProductQuantityHandler(createdOrder: OrderDTO) {
-    return createdOrder.items.forEach(async (item) => {
-      await this.productsRepository.update(item.productId, {
-        quantityInStock: {
-          decrement: item.quantity,
-        },
-      });
-    });
+    // Check product stock
+    const isSufficientStock = await this.checkProductAvailability(createdOrder);
+
+    if (!isSufficientStock) {
+      // Publish Message for order failed
+      await this.amqpConnection.publish(
+        RabbitExchanges.MESSAGE_WORKER,
+        RabbitRoutingKeys.MESSAGE_WORKER_EVENTS_ORDER_FAILED,
+        createdOrder,
+      );
+    } else {
+      try {
+        for (const item of createdOrder.items) {
+          await this.productsRepository.update(item.productId, {
+            quantityInStock: {
+              decrement: item.quantity,
+            },
+          });
+        }
+      } catch (err: any) {
+        // Publish Message for order failed
+        await this.amqpConnection.publish(
+          RabbitExchanges.MESSAGE_WORKER,
+          RabbitRoutingKeys.MESSAGE_WORKER_EVENTS_ORDER_FAILED,
+          createdOrder,
+        );
+      }
+
+      // Publish Message for notification
+      await this.amqpConnection.publish(
+        RabbitExchanges.MESSAGE_WORKER,
+        RabbitRoutingKeys.MESSAGE_WORKER_EVENTS_ORDER_CONFIRMATION,
+        createdOrder,
+      );
+    }
+  }
+
+  private async checkProductAvailability(
+    createdOrder: OrderDTO,
+  ): Promise<boolean> {
+    for (const item of createdOrder.items) {
+      const product = await this.productsRepository.findById(item.productId);
+      if (product.quantityInStock < item.quantity) {
+        console.log('Insufficient stock for product:', product.id);
+        return false;
+      }
+    }
+    return true;
   }
 }

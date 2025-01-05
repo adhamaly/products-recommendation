@@ -9,17 +9,20 @@ export interface ResponsePayload<T> {
 export class CustomResponse<T = any> {
   payload?: ResponsePayload<T>;
   statusCode: number;
+  message?: string;
 
   success({
     payload,
     statusCode = 200,
+    message,
   }: {
     payload?: ResponsePayload<T>;
     statusCode?: number;
+    message?: string;
   }) {
     this.payload = payload;
     this.statusCode = statusCode;
-
+    this.message = message;
     return this;
   }
 }

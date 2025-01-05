@@ -52,4 +52,17 @@ export class UserRepository {
   }): Promise<User> {
     return this.prisma.user.create({ data });
   }
+
+  /**
+   * Update an existing User.
+   * @param userId - The ID of the user to update.
+   * @param data - Prisma's UserUpdateInput.
+   * @returns The updated User.
+   */
+  async update(userId: number, data: Prisma.UserUpdateInput): Promise<User> {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data,
+    });
+  }
 }
